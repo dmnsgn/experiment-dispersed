@@ -10,11 +10,17 @@ require.config({
         app: '../app'
     },
 
+    shim: {
+        Stats: {
+            exports: 'Stats'
+        }
+    },
+
     deps: ['three']
 });
 
 require(['app/app', 'three'], function(App) {
-    var app = new App();
+    window.app = new App();
 });
 
 var log = function(x) {
