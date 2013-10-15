@@ -17,14 +17,16 @@ define([
 
 		this.constant = new Constant();
 
-		this.renderer = new THREE.WebGLRenderer();
+		this.renderer = new THREE.WebGLRenderer({
+			antialias: true
+		});
 		this.renderer.setSize(window.innerWidth, window.innerHeight);
 		document.body.appendChild(this.renderer.domElement);
 
 		this.scene = new THREE.Scene();
 		this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 10000);
 		this.camera.position.x = 10;
-		this.camera.position.y = 10;
+		this.camera.position.y = 15;
 		this.camera.position.z = 100;
 
 		this.init();
@@ -55,7 +57,7 @@ define([
 			// Objects
 			this.incidentRay = new IncidentRay(this.scene);
 			updateFcts.push(function(delta, now) {
-				this.incidentRay.update();
+				this.incidentRay.update(Math.cos(now) / 5);
 			}.bind(this));
 			this.prism = new Prism(this.scene);
 
@@ -66,7 +68,7 @@ define([
 
 			// Camera update
 			updateFcts.push(function(delta, now) {
-				//this.camera.position.x += (mouse.x * 25 - this.camera.position.x) * (delta * 3);
+				this.camera.position.x += (mouse.x * 25 - this.camera.position.x) * (delta * 3);
 				//this.camera.position.y += (mouse.y * 5 - this.camera.position.y) * (delta * 3);
 				this.camera.lookAt(this.scene.position);
 			}.bind(this));
@@ -169,8 +171,8 @@ define([
 			// Helpers
 			var helpers = [];
 			helpers.push(
-				/*new THREE.GridHelper(50, 2),*/
-				new THREE.AxisHelper(500)/*,
+				/*new THREE.GridHelper(50, 2),
+				new THREE.AxisHelper(500),
 				new THREE.CameraHelper(this.camera)*/
 			);
 
