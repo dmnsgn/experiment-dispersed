@@ -1,8 +1,5 @@
 define(function() {
 
-	var Constant, M_2PI, M_PI, M_PI2, M_PI4, M_PI8;
-
-
 	var Constant = function() {
 
 		// this.clearColor = "#393939";
@@ -22,6 +19,9 @@ define(function() {
 		window.M_PI4 = Math.PI / 4;
 
 		window.M_PI8 = Math.PI / 8;
+
+		window.deg2rad = Math.PI / 180;
+		window.rad2deg = 180 / Math.PI;
 
 	};
 

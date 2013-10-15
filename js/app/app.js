@@ -4,10 +4,12 @@ define([
 	'app/utils/Mouse',
 	'app/utils/AudioAnalyzer',
 	'app/geometries/TetrahedronGeometry',
+	'app/entities/IncidentRay',
+	'app/entities/Prism',
 	'app/helpers/Stats',
 	'app/helpers/GridHelper',
 	'app/helpers/CameraHelper'
-], function(GUI, Constant, Mouse, AudioAnalyzer, TetrahedronGeometry, Stats, GridHelper, CameraHelper) {
+], function(GUI, Constant, Mouse, AudioAnalyzer, TetrahedronGeometry, IncidentRay, Prism, Stats, GridHelper, CameraHelper) {
 
 	var mouse = new Mouse();
 
@@ -20,9 +22,10 @@ define([
 		document.body.appendChild(this.renderer.domElement);
 
 		this.scene = new THREE.Scene();
-		this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 100);
-		this.camera.position.y = 1;
-		this.camera.position.z = 3;
+		this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 10000);
+		this.camera.position.x = 10;
+		this.camera.position.y = 10;
+		this.camera.position.z = 100;
 
 		this.init();
 		this.addLights();
@@ -41,16 +44,30 @@ define([
 			var updateFcts = [];
 
 			this.createSurface();
-			this.createPrism();
+
+			// Cube Map
+			this.cubeMap = new THREE.Mesh(new THREE.CubeGeometry(2000,2000,2000), new THREE.MeshBasicMaterial({
+				color: '#000',
+				side: THREE.DoubleSide
+			}));
+			this.scene.add(this.cubeMap);
+
+			// Objects
+			this.incidentRay = new IncidentRay(this.scene);
+			updateFcts.push(function(delta, now) {
+				this.incidentRay.update();
+			}.bind(this));
+			this.prism = new Prism(this.scene);
 
 			updateFcts.push(function(delta, now) {
 				// mesh.rotation.x += 1 * delta;
 				// mesh.rotation.y += 2 * delta;		
 			});
+
 			// Camera update
 			updateFcts.push(function(delta, now) {
-				this.camera.position.x += (mouse.x * 15 - this.camera.position.x) * (delta * 3);
-				this.camera.position.y += (mouse.y * 5 - this.camera.position.y) * (delta * 3);
+				//this.camera.position.x += (mouse.x * 25 - this.camera.position.x) * (delta * 3);
+				//this.camera.position.y += (mouse.y * 5 - this.camera.position.y) * (delta * 3);
 				this.camera.lookAt(this.scene.position);
 			}.bind(this));
 
@@ -98,24 +115,6 @@ define([
 			this.scene.add( mesh );*/
 		},
 
-		// Bouger ça dans une classe à part
-		createPrism: function() {
-
-			// Create the object
-			var geometry = new THREE.TetrahedronGeometry();
-			var material = new THREE.MeshPhongMaterial({
-				color: '#333'
-			});
-			var mesh = new THREE.Mesh(geometry, material);
-			this.prism = mesh;
-
-			// Set cast shadow behavior
-			this.prism.castShadow = true;
-			this.prism.receiveShadow = false;
-
-			this.scene.add(mesh);
-		},
-
 		addLights: function () {
 			// Create the object
 			var ambientLight = new THREE.AmbientLight( 0x404040 );
@@ -140,23 +139,23 @@ define([
 		},
 
 		handleAudio: function () {
-			this.audioAnalyzer = new AudioAnalyzer("sounds/song.ogg");
+			this.audioAnalyzer = new AudioAnalyzer("sounds/What_We_Got_To_Lose_by_The_Juveniles.ogg");
 		},
 
 		createGUI: function() {
 			this.gui = new dat.GUI();
 
 			var cameraFolder = this.gui.addFolder('Camera');
-			cameraFolder.add(this.camera.position, 'z', 1, 100).name("Zoom").step("1");
+			cameraFolder.add(this.camera.position, 'z', 1, 1000).name("Zoom").step("1");
 
 			var prismFolder = this.gui.addFolder('Prism');
-			prismFolder.add(this.prism.rotation, 'x', 0, 1).name("Rotation X").step("0.1");
-			prismFolder.add(this.prism.rotation, 'y', 0, 1).name("Rotation Y").step("0.1");
-			prismFolder.add(this.prism.rotation, 'z', 0, 1).name("Rotation Z").step("0.1");
+			prismFolder.add(this.prism.mesh.rotation, 'x', 0, 360 * M_PI/180).name("Rotation X").step("0.1");
+			prismFolder.add(this.prism.mesh.rotation, 'y', 0, 360 * M_PI/180).name("Rotation Y").step("0.1");
+			prismFolder.add(this.prism.mesh.rotation, 'z', 0, 360 * M_PI/180).name("Rotation Z").step("0.1");
 
-			prismFolder.add(this.prism.position, 'x', 0, 200).name("Position X").step("1");
-			prismFolder.add(this.prism.position, 'y', 0, 200).name("Position Y").step("1");
-			prismFolder.add(this.prism.position, 'z', 0, 200).name("Position Z").step("1");
+			prismFolder.add(this.prism.mesh.position, 'x', 0, 200).name("Position X").step("1");
+			prismFolder.add(this.prism.mesh.position, 'y', 0, 200).name("Position Y").step("1");
+			prismFolder.add(this.prism.mesh.position, 'z', 0, 200).name("Position Z").step("1");
 
 		},
 
@@ -165,13 +164,13 @@ define([
 			// Open right folder
 			var e = document.createEvent('Events');
 			e.initEvent("click");
-			document.querySelectorAll(".dg li.title")[1].dispatchEvent(e);
+			document.querySelectorAll(".dg li.title")[0].dispatchEvent(e);
 
 			// Helpers
 			var helpers = [];
 			helpers.push(
 				/*new THREE.GridHelper(50, 2),*/
-				new THREE.AxisHelper(50)/*,
+				new THREE.AxisHelper(500)/*,
 				new THREE.CameraHelper(this.camera)*/
 			);
 
