@@ -11,15 +11,25 @@ require.config({
     },
 
     shim: {
+        three: {
+            exports: 'THREE'
+        },
         Stats: {
             exports: 'Stats'
+        },
+        TweenMax: {
+            exports: "TweenMax"
+        },
+        TimelineMax: {
+            deps: ["TweenMax"],
+            exports: "TimelineMax"
         }
     },
 
-    deps: ['three']
+    deps: ['THREE', 'TweenMax', 'TimelineMax']
 });
 
-require(['app/app', 'three'], function(App) {
+require(['app/app'], function(App) {
     window.app = new App();
 });
 

@@ -3,7 +3,7 @@ define(function() {
 	// LIGHTS.SpotGeometry
 	var IncidentRay = function(scene) {
 		var texture = THREE.ImageUtils.loadTexture("img/spotLine.png");
-		this.geometry = new THREE.PlaneGeometry(1, 5000, 1, 100);
+		this.geometry = new THREE.PlaneGeometry(1, 1000, 1, 100);
 		//this.geometry = new THREE.CylinderGeometry(1, 5000, 1, 100);
 /*
 		this.geometry.computeCentroids();
@@ -16,6 +16,7 @@ define(function() {
 			color: 0xFFFFFF,
 			map: texture,
 			transparent: true,
+			alphaTest: 0.5,
 			side: THREE.DoubleSide
 			// wireframe: true
 			// blending: THREE.AdditiveBlending
@@ -25,7 +26,7 @@ define(function() {
 		this.randomVertices();
 
 		this.mesh = new THREE.Mesh(this.geometry, this.material);
-		this.mesh.position.set(0, 0, 60);
+		this.mesh.position.set(0, 0, 2500);
 		this.mesh.rotation.x = 90 * deg2rad;
 
 		scene.add(this.mesh);
@@ -35,7 +36,7 @@ define(function() {
 		update: function(radius) {
 			var angle = 0;
 			//var radius = 0.3;
-			log(radius)
+			//log(radius)
 			for (var i = this.geometry.vertices.length - 1; i >= 0; i--) {
 				var vertex = this.geometry.vertices[i];
 				angle += 0.1;
@@ -45,6 +46,10 @@ define(function() {
 				}
 				this.geometry.verticesNeedUpdate = true;
 			}
+		},
+
+		position: function (position) {
+			this.mesh.position.z = position + 300;
 		},
 
 		randomVertices: function () {

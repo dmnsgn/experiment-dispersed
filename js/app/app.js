@@ -2,21 +2,25 @@ define([
 	'dat.gui',
 	'app/utils/Constant',
 	'app/utils/Mouse',
+	'app/utils/Resize',
 	'app/utils/AudioAnalyzer',
 	'app/geometries/TetrahedronGeometry',
+	'app/entities/StoryBoard',
 	'app/entities/IncidentRay',
 	'app/entities/Prism',
 	'app/helpers/Stats',
 	'app/helpers/GridHelper',
 	'app/helpers/CameraHelper'
-], function(GUI, Constant, Mouse, AudioAnalyzer, TetrahedronGeometry, IncidentRay, Prism, Stats, GridHelper, CameraHelper) {
+], function(GUI, Constant, Mouse, Resize, AudioAnalyzer, TetrahedronGeometry, StoryBoard, IncidentRay, Prism, Stats, GridHelper, CameraHelper) {
 
 	var mouse = new Mouse();
 
 	var App = function() {
 
 		this.constant = new Constant();
+		this.storyBoard = new StoryBoard(this);
 
+		// Pitetre créer ça plus tard
 		this.renderer = new THREE.WebGLRenderer({
 			antialias: true
 		});
@@ -27,38 +31,54 @@ define([
 		this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 10000);
 		this.camera.position.x = 10;
 		this.camera.position.y = 15;
-		this.camera.position.z = 100;
+		this.camera.position.z = 1000;
 
-		this.init();
-		this.addLights();
-		this.shadowCast();
-		//this.handleAudio();
+		var resize = new Resize(this.renderer, this.camera);
 
-		this.createGUI();
-		this.debug();
+		this.handleAudio();
 
 	};
 
 	App.prototype = {
 
+		handleAudio: function() {
+			var that = this;
+			this.audioAnalyzer = new AudioAnalyzer("sounds/What_We_Got_To_Lose_by_The_Juveniles.ogg");
+			var interval = setInterval(function() {
+				log(that.audioAnalyzer.percentLoaded);
+				if (that.audioAnalyzer.percentLoaded == 100) {
+					clearInterval(interval);
+					that.init();
+				}
+			}, 1);
+		},
+
 		init: function() {
 			var that = this;
 			var updateFcts = [];
 
+			this.addLights();
+			this.shadowCast();
+
 			this.createSurface();
 
 			// Cube Map
-			this.cubeMap = new THREE.Mesh(new THREE.CubeGeometry(2000,2000,2000), new THREE.MeshBasicMaterial({
-				color: '#000',
-				side: THREE.DoubleSide
+			var texture = THREE.ImageUtils.loadTexture("img/2.jpg");
+			this.cubeMap = new THREE.Mesh(new THREE.CubeGeometry(2000, 2000, 2000), new THREE.MeshBasicMaterial({
+				color: 0xFFFFFF,
+				map: texture,
+				transparent: true,
+				side: THREE.BackSide
 			}));
 			this.scene.add(this.cubeMap);
 
 			// Objects
-			this.incidentRay = new IncidentRay(this.scene);
+			/*this.incidentRay = new IncidentRay(this.scene);
 			updateFcts.push(function(delta, now) {
-				this.incidentRay.update(Math.cos(now) / 5);
-			}.bind(this));
+				this.incidentRay.update(Math.cos(now) / 2);
+				this.incidentRay.position(this.camera.position.z);
+			}.bind(this));*/
+			this.createParticles();
 			this.prism = new Prism(this.scene);
 
 			updateFcts.push(function(delta, now) {
@@ -92,11 +112,42 @@ define([
 					updateFn(deltaMsec / 1000, nowMsec / 1000);
 				});
 				//console.log(that.audioAnalyzer.getFrequencies());
-				//log(that.audioAnalyzer.percentLoaded);
+				
+				var RADIUS = 200;
+				var QUANTITY = 150;
+				for (var i = 0, len = that.scene.children.length; i < len; i++) {
+					var particle = scene.children[i];
+					
+					if ( particle instanceof THREE.ParticleSystem ) {
+
+						particle.offset.x += particle.speed;
+						particle.offset.y += particle.speed;
+						
+						particle.shift.x += ( mouse.x - particle.shift.x) * (particle.speed);
+						particle.shift.y += ( -mouse.x - particle.shift.y) * (particle.speed);
+						
+						particle.position.x = particle.shift.x + Math.cos(i + particle.offset.x) * RADIUS;
+						particle.position.y = particle.shift.y + Math.sin(i + particle.offset.y) * RADIUS;
+						particle.position.z = i / QUANTITY * RADIUS;
+						
+						particle.size += ( particle.targetSize - particle.size ) * 0.05;
+						
+						if( Math.round( particle.size ) == Math.round( particle.targetSize ) ) {
+							particle.targetSize = 1 + Math.random() * 10;
+						}
+
+					}
+				}
+
 			});
+
+			//this.storyBoard.introduction().play();
+
+			this.createGUI();
+			this.debug();
 		},
 
-		createSurface: function () {
+		createSurface: function() {
 
 			/*var geometry	= new THREE.CubeGeometry( 1, -0.5, 1);
 			var texture	= THREE.ImageUtils.loadTexture( "img/water.jpg" );
@@ -117,13 +168,42 @@ define([
 			this.scene.add( mesh );*/
 		},
 
-		addLights: function () {
+		createParticles: function() {
+			this.particles = [];
+			var materials = [];
+			var RADIUS = 200;
+			var QUANTITY = 150;
+			var geometry = new THREE.Geometry();
+			for (var i = 0; i < QUANTITY; i++) {
+				var particle = new THREE.Particle(new THREE.ParticleBasicMaterial({
+					//color: Math.random() * 0x404040 + 0xaaaaaa
+					color: 0xF00
+				}));
+
+				materials[i] = new THREE.ParticleBasicMaterial( { size: 2 } );
+				particle.position.x = 100;
+				particle.position.y = 100;
+				particle.position.z = 100;
+				
+				particle.offset = { x: 0, y: 0, z: 0 };
+				particle.shift = { x: 0, y: 0 };
+				particle.speed = 0.01+Math.random()*0.04;
+				particle.targetSize = particle.size;
+
+				particles = new THREE.ParticleSystem( geometry, materials[i] );
+				
+				
+				this.scene.add(particle);
+			}
+		},
+
+		addLights: function() {
 			// Create the object
-			var ambientLight = new THREE.AmbientLight( 0x404040 );
-			var directionalLight = new THREE.DirectionalLight( 0xffffff );
+			var ambientLight = new THREE.AmbientLight(0x404040);
+			var directionalLight = new THREE.DirectionalLight(0x404040);
 
 			// Set cast shadow behavior
-			directionalLight.position.set( 0, 1, 0 ).normalize();
+			directionalLight.position.set(0, 1, 0).normalize();
 			directionalLight.castShadow = true;
 			directionalLight.shadowDarkness = 0.5;
 
@@ -133,31 +213,32 @@ define([
 			this.scene.add(directionalLight);
 		},
 
-		shadowCast: function () {
+		shadowCast: function() {
 			this.renderer.shadowMapEnabled = true;
 
 			// to antialias the shadow
 			this.renderer.shadowMapSoft = true;
 		},
 
-		handleAudio: function () {
-			this.audioAnalyzer = new AudioAnalyzer("sounds/What_We_Got_To_Lose_by_The_Juveniles.ogg");
-		},
-
 		createGUI: function() {
 			this.gui = new dat.GUI();
 
 			var cameraFolder = this.gui.addFolder('Camera');
-			cameraFolder.add(this.camera.position, 'z', 1, 1000).name("Zoom").step("1");
+			cameraFolder.add(this.camera.position, 'z', 1, 1500).name("Zoom").step("1");
 
 			var prismFolder = this.gui.addFolder('Prism');
-			prismFolder.add(this.prism.mesh.rotation, 'x', 0, 360 * M_PI/180).name("Rotation X").step("0.1");
-			prismFolder.add(this.prism.mesh.rotation, 'y', 0, 360 * M_PI/180).name("Rotation Y").step("0.1");
-			prismFolder.add(this.prism.mesh.rotation, 'z', 0, 360 * M_PI/180).name("Rotation Z").step("0.1");
+			prismFolder.add(this.prism.mesh.rotation, 'x', 0, 360 * M_PI / 180).name("Rotation X").step("0.1");
+			prismFolder.add(this.prism.mesh.rotation, 'y', 0, 360 * M_PI / 180).name("Rotation Y").step("0.1");
+			prismFolder.add(this.prism.mesh.rotation, 'z', 0, 360 * M_PI / 180).name("Rotation Z").step("0.1");
 
 			prismFolder.add(this.prism.mesh.position, 'x', 0, 200).name("Position X").step("1");
 			prismFolder.add(this.prism.mesh.position, 'y', 0, 200).name("Position Y").step("1");
 			prismFolder.add(this.prism.mesh.position, 'z', 0, 200).name("Position Z").step("1");
+
+			/*var whiteLightFolder = this.gui.addFolder('White Light');
+			whiteLightFolder.add(this.incidentRay.mesh.position, 'x', -2500, 2500).name("Position X").step("1");
+			whiteLightFolder.add(this.incidentRay.mesh.position, 'y', -2500, 2500).name("Position Y").step("1");
+			whiteLightFolder.add(this.incidentRay.mesh.position, 'z', -2500, 2500).name("Position Z").step("1");*/
 
 		},
 
@@ -166,7 +247,10 @@ define([
 			// Open right folder
 			var e = document.createEvent('Events');
 			e.initEvent("click");
-			document.querySelectorAll(".dg li.title")[0].dispatchEvent(e);
+			var folders = document.querySelectorAll(".dg li.title");
+			for (var i = 0, len = folders.length; i < len; i++) {
+				folders[i].dispatchEvent(e);
+			}
 
 			// Helpers
 			var helpers = [];
@@ -200,6 +284,12 @@ define([
 				stats.end();
 
 			}, 1000 / 60);
+		},
+
+		distanceBetween: function(p1,p2) {
+			var dx = p2.x-p1.x;
+			var dy = p2.y-p1.y;
+			return Math.sqrt(dx*dx + dy*dy);
 		}
 
 	};

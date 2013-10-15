@@ -3,7 +3,7 @@ define(function() {
 	var Prism = function(scene) {
 		this.geometry = new THREE.TetrahedronGeometry(20);
 		this.material = new THREE.MeshPhongMaterial({
-			color: '#333',
+			color: '#DDD',
 			opacity: 1
 		});
 		this.mesh = new THREE.Mesh(this.geometry, this.material);
