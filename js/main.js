@@ -82,7 +82,7 @@ window.dispatchCustomEvent = function(name, data) {
 
 };
 
-require(['app/app'], function(App) {
+require(['app/app', 'THREE'], function(App) {
     window.app = new App();
 });
 

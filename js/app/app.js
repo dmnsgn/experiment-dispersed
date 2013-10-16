@@ -20,6 +20,7 @@ define([
 		this.constant = new Constant();
 		this.mouse = new Mouse();
 		this.storyBoard = new StoryBoard(this);
+		this.spectrum = [0x760CDD, 0x00B0F1, 0x00F1C3, 0x92D14E, 0xFFC000, 0xF3FF00, 0xDD6008, 0x111111];
 
 		// Pitetre créer ça plus tard
 		this.renderer = new THREE.WebGLRenderer({
@@ -51,7 +52,7 @@ define([
 				log(that.audioAnalyzer.percentLoaded);
 				if (that.audioAnalyzer.percentLoaded == 100) {
 					clearInterval(interval);
-					that.audioAnalyzer.changeVolume(0.1);
+					that.audioAnalyzer.changeVolume(0);
 					that.init();
 
 					setTimeout(function () {
@@ -59,9 +60,6 @@ define([
 					}, 1000);
 				}
 			}, 1);
-			addEvent(window, "fileLoaded", function(e) {
-				that.audioAnalyzer.play();
-			});
 		},
 
 		init: function() {
@@ -89,29 +87,12 @@ define([
 				this.incidentRay.position(this.camera.position.z);
 			}.bind(this));*/
 			this.whiteLight = new ParticleTrail("whitelight", this.scene, 30);
-			this.updatedFunctions.push(function(delta, now) {
-				this.whiteLight.update(Math.cos(now) / 2);
-			}.bind(this));
-
 
 			this.prism = new Prism(this.scene);
 
 			this.updatedFunctions.push(function(delta, now) {
-				// mesh.rotation.x += 1 * delta;
-				// mesh.rotation.y += 2 * delta;		
+				that.update(delta, now);
 			});
-
-			// Camera update
-			this.updatedFunctions.push(function(delta, now) {
-				this.camera.position.x += (this.mouse.x * 25 - this.camera.position.x) * (delta * 3);
-				//this.camera.position.y += (this.mouse.y * 5 - this.camera.position.y) * (delta * 3);
-				//this.camera.lookAt(this.scene.position);
-			}.bind(this));
-
-			// Render
-			this.updatedFunctions.push(function() {
-				this.renderer.render(this.scene, this.camera);
-			}.bind(this));
 
 			// Loop
 			var lastTimeMsec = null;
@@ -129,9 +110,6 @@ define([
 					updateFn(deltaMsec / 1000, nowMsec / 1000);
 				});
 
-				that.camera.position.x = 0 + that.camera.shakeForce * 2 * Math.random() - that.camera.shakeForce;
-				that.camera.position.y = 0 + that.camera.shakeForce * 2 * Math.random() - that.camera.shakeForce;
-
 			});
 
 			/*setTimeout(function () {
@@ -142,18 +120,45 @@ define([
 			this.debug();
 		},
 
+		update: function(delta, now) {
+
+
+			if (app.storyBoard.step == "introduction") {
+				this.whiteLight.update(Math.cos(now) / 2);
+				this.prism.update(Math.sin(now) / 20, Math.cos(now) / 10);
+			} else if (app.storyBoard.step == "incidence") {
+				this.prism.coolPosition(Math.cos(now) / 10);
+			}
+
+			// Camera update
+			//this.camera.position.x += (this.mouse.x * 25 - this.camera.position.x) * (delta * 3);
+			this.camera.position.x = 0 + this.camera.shakeForce * 2 * Math.random() - this.camera.shakeForce;
+			this.camera.position.y = 0 + this.camera.shakeForce * 2 * Math.random() - this.camera.shakeForce;
+
+			// Render
+			this.renderer.render(this.scene, this.camera);
+		},
+
 		handleAudio: function () {
 			this.storyBoard.introduction().play();
 
 			this.updatedFunctions.push(function() {
 
-				// Handle drum kick
-				if(this.audioAnalyzer.getAverageFrequencies() > 110 && this.camera.position.z > 200) {
-					this.camera.shakeForce = (this.audioAnalyzer.getAverageFrequencies() - 110) * 3;
-					TweenMax.to(this.camera, 0.5, {
-						shakeForce: 0
-					});
-					//this.storyBoard.shake(5).play();
+				switch (this.storyBoard.step) {
+					// Handle drum kick
+					case "introduction":
+						if (this.audioAnalyzer.getAverageFrequencies() > 110) {
+							this.camera.shakeForce = (this.audioAnalyzer.getAverageFrequencies() - 110) * 3;
+							TweenMax.to(this.camera, 0.5, {
+								shakeForce: 0
+							});
+						}
+						break;
+					case "incidence":
+						// do things
+						break;
+					default:
+						log("Ooops ! Out of switch");
 				}
 			}.bind(this));
 		},

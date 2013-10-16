@@ -4,7 +4,7 @@ define(function() {
 		this.geometry = new THREE.TetrahedronGeometry(20);
 		this.materials = [
 			new THREE.MeshPhongMaterial({
-				color: '#333',
+				color: '#111',
 				opacity: 1
 			}),
 			new THREE.MeshBasicMaterial({
@@ -27,7 +27,15 @@ define(function() {
 	};
 
 	Prism.prototype = {
+		update: function (rotationX, rotationY) {
+			this.mesh.rotation.x = rotationX;
+			this.mesh.rotation.y = rotationY;
+		},
 
+		coolPosition: function (rotationY) {
+			this.mesh.rotation.x = 1;
+			this.mesh.rotation.y = rotationY;
+		}
 	};
 
 	return Prism;

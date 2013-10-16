@@ -1,4 +1,4 @@
-define(function() {
+define(['THREE'], function() {
 
     /**
      * @author alteredq / http://alteredqualia.com/

@@ -13,8 +13,7 @@ define(function() {
 		init: function() {
 			var RADIUS = 20;
 			var that = this;
-			//var geometry = new THREE.SphereGeometry(1, 20, 20);
-			var geometry = new THREE.PlaneGeometry(0.1, 100, 1, 100);
+			var geometry = new THREE.PlaneGeometry(0.1, 100, 1, 10);
 			for (var i = 0; i < this.number; i++) {
 
 				// Color
@@ -25,55 +24,28 @@ define(function() {
 					side: THREE.DoubleSide
 				}));
 
+				// Fade In
 				TweenMax.to(object.material, 1.8, {
 					opacity: 1,
 					delay: 0.40 * Math.random() + 1.2
 				});
 
-				//object.material.emissive.setHex(0xF00);
-
-				// Positionning
-				// object.position.x = Math.random() * 200 - 100;
-				// object.position.y = Math.random() * 200 - 100;
-
-				diffZ = 200;
-				strates = 10;
-				// strates = (10 * i) / that.number;
-				//object.position.z = 1 * (((diffZ / 12) * strates) + 10);
 				object.position.z = app.camera.position.z + 100;
 
-				// Random circle position
-				// var randomPoints = that.getRandomNumbers();
-				// var x1 = randomPoints[0];
-				// var x2 = randomPoints[1];
-				// var x1_squared = Math.pow(x1, 2);
-				// var x2_squared = Math.pow(x2, 2);
-
-				var offsetCircle = Math.random() * 5;
-				// object.position.x = offsetCircle + 30 * ((x1_squared - x2_squared) / (x1_squared + x2_squared));
-				// object.position.y = offsetCircle + 30 * ((2 * x1 * x2) / (x1_squared + x2_squared));
-
-				object.shift = {
-					x: app.mouse.x,
-					y: app.mouse.y
-				};
-
-				object.orbit = RADIUS * .5 + (RADIUS * .5 * Math.random());
-				object.angle = 0;
 
 				// Random Rotation
 				object.rotation.x = 90 * deg2rad;
-				//object.rotation.x = (Math.random() * 360) * deg2rad;
-				//object.rotation.y = (Math.random() * 360) * deg2rad;
-				//object.rotation.z = (Math.random() * 360) * deg2rad;
 
 				this.particles.push(object);
 
 				object.type = that.name;
-				object.zOffset = ~~(Math.random() * 20) + 1;
-				object.time = ~~(Math.random() * 20) + 1;
-				object.force = ~~(Math.random() * 50) + 1;
+				object.angle = 0;
+				object.force = ~~ (Math.random() * 20) + 1;
+				object.time = ~~ (Math.random() * 20) + 1;
 				object.speed = 0.001 + Math.random() * 0.0004;
+
+				object.orbit = RADIUS * 0.5 + (RADIUS * 0.5 * Math.random());
+				object.zOffset = ~~ (Math.random() * 20) + 10;
 
 				that.scene.add(object);
 			}
@@ -87,7 +59,8 @@ define(function() {
 			for (var i = 0; i < this.particles.length; i++) {
 				var particle = this.particles[i];
 
-				particle.angle += particle.speed;
+				particle.speed = 0.001 + Math.random() * 0.0004;
+				particle.angle += particle.speed + app.camera.position.z * particle.speed / 10000;
 				particle.time += particle.speed * 5;
 
 
@@ -102,15 +75,31 @@ define(function() {
 				}
 */
 
-				particle.shift.x += (app.mouse.x - particle.shift.x) * (particle.speed);
-				particle.shift.y += (app.mouse.y - particle.shift.y) * (particle.speed);
 
 				// Apply position
-				particle.position.x = particle.shift.x + Math.cos(i + particle.angle) * (particle.orbit * RADIUS_SCALE);
-				particle.position.y = particle.shift.y + Math.sin(i + particle.angle) * (particle.orbit * RADIUS_SCALE);
-				//particle.position.z = app.camera.position.z + Math.sin(i + particle.zOffset);
+				particle.position.x = Math.cos(i + particle.angle) * (particle.orbit * RADIUS_SCALE);
+				particle.position.y = Math.sin(i + particle.angle) * (particle.orbit * RADIUS_SCALE);
 
-				particle.position.z = app.camera.position.z + 10 + particle.zOffset + Math.sin(particle.time) * particle.force;
+				particle.position.z = app.camera.position.z + particle.zOffset + Math.sin(particle.time) * particle.force;
+			}
+		},
+
+		incidence: function() {
+			var RADIUS_SCALE = 1;
+			var RADIUS_SCALE_MAX = 1.5;
+			RADIUS_SCALE = Math.min(RADIUS_SCALE, RADIUS_SCALE_MAX);
+
+			for (var i = 0; i < this.particles.length; i++) {
+
+				var particle = this.particles[i];
+				TweenMax.to(particle.position, 1, {
+					/*x: Math.cos(i + particle.angle) * (particle.orbit * RADIUS_SCALE),
+					y: Math.sin(i + particle.angle) * (particle.orbit * RADIUS_SCALE),*/
+					x: 0,
+					y: 0,
+					z: -(app.camera.position.z + particle.zOffset + Math.sin(particle.time) * particle.force)
+				});
+
 			}
 		},
 

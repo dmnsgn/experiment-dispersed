@@ -1,3 +1,6 @@
+
+define(['THREE'], function () {
+
 /**
  * @author clockworkgeek / https://github.com/clockworkgeek
  * @author timothypratley / https://github.com/timothypratley
@@ -222,3 +225,5 @@ THREE.PolyhedronGeometry = function ( vertices, faces, radius, detail ) {
 };
 
 THREE.PolyhedronGeometry.prototype = Object.create( THREE.Geometry.prototype );
+
+});
