@@ -2,11 +2,19 @@ define(function() {
 
 	var Prism = function(scene) {
 		this.geometry = new THREE.TetrahedronGeometry(20);
-		this.material = new THREE.MeshPhongMaterial({
-			color: '#DDD',
-			opacity: 1
-		});
-		this.mesh = new THREE.Mesh(this.geometry, this.material);
+		this.materials = [
+			new THREE.MeshPhongMaterial({
+				color: '#333',
+				opacity: 1
+			}),
+			new THREE.MeshBasicMaterial({
+				color: '#AAA',
+				wireframe: true,
+				transparent: true,
+				opacity: 1
+			})
+		];
+		this.mesh = new THREE.SceneUtils.createMultiMaterialObject(this.geometry, this.materials);
 
 		// Set cast shadow behavior
 		//this.mesh.castShadow = true;

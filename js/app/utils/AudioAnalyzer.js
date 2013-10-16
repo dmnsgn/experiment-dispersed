@@ -10,6 +10,7 @@ define(function() {
 		this.createContext();
 		this.percentLoaded = 0;
 		this.setupAudioNodes();
+		this.setupVolume();
 		this.loadSound(file);
 	};
 
@@ -20,6 +21,7 @@ define(function() {
 				this.ctx = new webkitAudioContext();
 				this.audioBuffer;
 				this.sourceNode;
+				this.gainNode;
 			} else {
 				alert("Your browser doesn't support Web Audio API, use latest Chrome version!");
 			}
@@ -47,6 +49,17 @@ define(function() {
 			// connect it to context destination
 			this.sourceNode.connect(this.ctx.destination);
 
+		},
+		setupVolume: function() {
+			// Create a gain node.
+			this.gainNode = this.ctx.createGain();
+			// Connect the source to the gain node.
+			this.sourceNode.connect(this.gainNode);
+			// Connect the gain node to the destination.
+			this.gainNode.connect(this.ctx.destination);
+		},
+		changeVolume: function(volume) {
+			this.gainNode.gain.value = volume;
 		},
 		loadSound: function(file) {
 			var self = this;
@@ -80,6 +93,21 @@ define(function() {
 			this.analyser.getByteFrequencyData(frequencies);
 
 			return frequencies;
+		},
+
+		getAverageFrequencies: function() {
+			var values = 0;
+			var average;
+
+			var length = this.getFrequencies().length;
+
+			// get all the frequency amplitudes
+			for (var i = 0; i < length; i++) {
+				values += this.getFrequencies()[i];
+			}
+
+			average = values / length;
+			return average;
 		},
 
 		onProgress: function(e) {

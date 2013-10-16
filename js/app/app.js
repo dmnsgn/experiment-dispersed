@@ -6,18 +6,19 @@ define([
 	'app/utils/AudioAnalyzer',
 	'app/geometries/TetrahedronGeometry',
 	'app/entities/StoryBoard',
+	'app/entities/ParticleTrail',
 	'app/entities/IncidentRay',
 	'app/entities/Prism',
 	'app/helpers/Stats',
 	'app/helpers/GridHelper',
 	'app/helpers/CameraHelper'
-], function(GUI, Constant, Mouse, Resize, AudioAnalyzer, TetrahedronGeometry, StoryBoard, IncidentRay, Prism, Stats, GridHelper, CameraHelper) {
+], function(GUI, Constant, Mouse, Resize, AudioAnalyzer, TetrahedronGeometry, StoryBoard, ParticleTrail, IncidentRay, Prism, Stats, GridHelper, CameraHelper) {
 
-	var mouse = new Mouse();
 
 	var App = function() {
 
 		this.constant = new Constant();
+		this.mouse = new Mouse();
 		this.storyBoard = new StoryBoard(this);
 
 		// Pitetre créer ça plus tard
@@ -30,32 +31,41 @@ define([
 		this.scene = new THREE.Scene();
 		this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 10000);
 		this.camera.position.x = 10;
-		this.camera.position.y = 15;
+		//this.camera.position.y = 15;
 		this.camera.position.z = 1000;
+		this.camera.lookAt(this.scene.position);
 
 		var resize = new Resize(this.renderer, this.camera);
 
-		this.handleAudio();
+		this.setupAudio();
 
 	};
 
 	App.prototype = {
 
-		handleAudio: function() {
+		setupAudio: function() {
 			var that = this;
 			this.audioAnalyzer = new AudioAnalyzer("sounds/What_We_Got_To_Lose_by_The_Juveniles.ogg");
 			var interval = setInterval(function() {
 				log(that.audioAnalyzer.percentLoaded);
 				if (that.audioAnalyzer.percentLoaded == 100) {
 					clearInterval(interval);
+					that.audioAnalyzer.changeVolume(0.1);
 					that.init();
+
+					setTimeout(function () {
+						that.handleAudio();
+					}, 1000);
 				}
 			}, 1);
+			addEvent(window, "fileLoaded", function(e) {
+				that.audioAnalyzer.play();
+			});
 		},
 
 		init: function() {
 			var that = this;
-			var updateFcts = [];
+			this.updatedFunctions = [];
 
 			this.addLights();
 			this.shadowCast();
@@ -74,27 +84,32 @@ define([
 
 			// Objects
 			/*this.incidentRay = new IncidentRay(this.scene);
-			updateFcts.push(function(delta, now) {
+			this.updatedFunctions.push(function(delta, now) {
 				this.incidentRay.update(Math.cos(now) / 2);
 				this.incidentRay.position(this.camera.position.z);
 			}.bind(this));*/
-			this.createParticles();
+			this.whiteLight = new ParticleTrail("whitelight", this.scene, 30);
+			this.updatedFunctions.push(function(delta, now) {
+				this.whiteLight.update(Math.cos(now) / 2);
+			}.bind(this));
+
+
 			this.prism = new Prism(this.scene);
 
-			updateFcts.push(function(delta, now) {
+			this.updatedFunctions.push(function(delta, now) {
 				// mesh.rotation.x += 1 * delta;
 				// mesh.rotation.y += 2 * delta;		
 			});
 
 			// Camera update
-			updateFcts.push(function(delta, now) {
-				this.camera.position.x += (mouse.x * 25 - this.camera.position.x) * (delta * 3);
-				//this.camera.position.y += (mouse.y * 5 - this.camera.position.y) * (delta * 3);
-				this.camera.lookAt(this.scene.position);
+			this.updatedFunctions.push(function(delta, now) {
+				this.camera.position.x += (this.mouse.x * 25 - this.camera.position.x) * (delta * 3);
+				//this.camera.position.y += (this.mouse.y * 5 - this.camera.position.y) * (delta * 3);
+				//this.camera.lookAt(this.scene.position);
 			}.bind(this));
 
 			// Render
-			updateFcts.push(function() {
+			this.updatedFunctions.push(function() {
 				this.renderer.render(this.scene, this.camera);
 			}.bind(this));
 
@@ -103,48 +118,37 @@ define([
 			requestAnimationFrame(function animate(nowMsec) {
 				// keep looping
 				requestAnimationFrame(animate);
+
 				// measure time
 				lastTimeMsec = lastTimeMsec || nowMsec - 1000 / 60;
 				var deltaMsec = Math.min(200, nowMsec - lastTimeMsec);
 				lastTimeMsec = nowMsec;
+
 				// call each update function
-				updateFcts.forEach(function(updateFn) {
+				that.updatedFunctions.forEach(function(updateFn) {
 					updateFn(deltaMsec / 1000, nowMsec / 1000);
 				});
-				//console.log(that.audioAnalyzer.getFrequencies());
-				
-				var RADIUS = 200;
-				var QUANTITY = 150;
-				for (var i = 0, len = that.scene.children.length; i < len; i++) {
-					var particle = scene.children[i];
-					
-					if ( particle instanceof THREE.ParticleSystem ) {
-
-						particle.offset.x += particle.speed;
-						particle.offset.y += particle.speed;
-						
-						particle.shift.x += ( mouse.x - particle.shift.x) * (particle.speed);
-						particle.shift.y += ( -mouse.x - particle.shift.y) * (particle.speed);
-						
-						particle.position.x = particle.shift.x + Math.cos(i + particle.offset.x) * RADIUS;
-						particle.position.y = particle.shift.y + Math.sin(i + particle.offset.y) * RADIUS;
-						particle.position.z = i / QUANTITY * RADIUS;
-						
-						particle.size += ( particle.targetSize - particle.size ) * 0.05;
-						
-						if( Math.round( particle.size ) == Math.round( particle.targetSize ) ) {
-							particle.targetSize = 1 + Math.random() * 10;
-						}
-
-					}
-				}
 
 			});
 
-			//this.storyBoard.introduction().play();
-
+			/*setTimeout(function () {
+				debugger;
+			}, 3000);
+*/
 			this.createGUI();
 			this.debug();
+		},
+
+		handleAudio: function () {
+			this.storyBoard.introduction().play();
+
+			this.updatedFunctions.push(function() {
+
+				// Handle drum kick
+				if(this.audioAnalyzer.getAverageFrequencies() > 110 && this.camera.position.z > 200) {
+					this.storyBoard.shake(5).play();
+				}
+			}.bind(this));
 		},
 
 		createSurface: function() {
@@ -168,38 +172,9 @@ define([
 			this.scene.add( mesh );*/
 		},
 
-		createParticles: function() {
-			this.particles = [];
-			var materials = [];
-			var RADIUS = 200;
-			var QUANTITY = 150;
-			var geometry = new THREE.Geometry();
-			for (var i = 0; i < QUANTITY; i++) {
-				var particle = new THREE.Particle(new THREE.ParticleBasicMaterial({
-					//color: Math.random() * 0x404040 + 0xaaaaaa
-					color: 0xF00
-				}));
-
-				materials[i] = new THREE.ParticleBasicMaterial( { size: 2 } );
-				particle.position.x = 100;
-				particle.position.y = 100;
-				particle.position.z = 100;
-				
-				particle.offset = { x: 0, y: 0, z: 0 };
-				particle.shift = { x: 0, y: 0 };
-				particle.speed = 0.01+Math.random()*0.04;
-				particle.targetSize = particle.size;
-
-				particles = new THREE.ParticleSystem( geometry, materials[i] );
-				
-				
-				this.scene.add(particle);
-			}
-		},
-
 		addLights: function() {
 			// Create the object
-			var ambientLight = new THREE.AmbientLight(0x404040);
+			var ambientLight = new THREE.AmbientLight(0x888888);
 			var directionalLight = new THREE.DirectionalLight(0x404040);
 
 			// Set cast shadow behavior
