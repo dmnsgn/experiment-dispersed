@@ -34,6 +34,7 @@ define([
 		//this.camera.position.y = 15;
 		this.camera.position.z = 1000;
 		this.camera.lookAt(this.scene.position);
+		this.camera.shakeForce = 0;
 
 		var resize = new Resize(this.renderer, this.camera);
 
@@ -77,7 +78,6 @@ define([
 			this.cubeMap = new THREE.Mesh(new THREE.CubeGeometry(2000, 2000, 2000), new THREE.MeshBasicMaterial({
 				color: 0xFFFFFF,
 				map: texture,
-				transparent: true,
 				side: THREE.BackSide
 			}));
 			this.scene.add(this.cubeMap);
@@ -129,6 +129,9 @@ define([
 					updateFn(deltaMsec / 1000, nowMsec / 1000);
 				});
 
+				that.camera.position.x = 0 + that.camera.shakeForce * 2 * Math.random() - that.camera.shakeForce;
+				that.camera.position.y = 0 + that.camera.shakeForce * 2 * Math.random() - that.camera.shakeForce;
+
 			});
 
 			/*setTimeout(function () {
@@ -146,7 +149,11 @@ define([
 
 				// Handle drum kick
 				if(this.audioAnalyzer.getAverageFrequencies() > 110 && this.camera.position.z > 200) {
-					this.storyBoard.shake(5).play();
+					this.camera.shakeForce = (this.audioAnalyzer.getAverageFrequencies() - 110) * 3;
+					TweenMax.to(this.camera, 0.5, {
+						shakeForce: 0
+					});
+					//this.storyBoard.shake(5).play();
 				}
 			}.bind(this));
 		},

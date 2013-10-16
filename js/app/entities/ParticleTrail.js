@@ -20,10 +20,15 @@ define(function() {
 				// Color
 				var object = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
 					transparent: true,
-					opacity: 0.5,
+					opacity: 0,
 					color: 0xFFFFFF,
 					side: THREE.DoubleSide
 				}));
+
+				TweenMax.to(object.material, 1.8, {
+					opacity: 1,
+					delay: 0.40 * Math.random() + 1.2
+				});
 
 				//object.material.emissive.setHex(0xF00);
 
