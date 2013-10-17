@@ -1,4 +1,4 @@
-define(function() {
+define(['app/app'], function() {
 
 	var ParticleAssembler = function() {
 		this.engines = [];
@@ -36,7 +36,6 @@ define(function() {
 					particleTexture: THREE.ImageUtils.loadTexture('img/particles/spark.png'),
 
 					sizeTween: new Tween([0, 0.1], [1, 50]),
-					//colorBase    : new THREE.Vector3(0.02, 1, 0.4),
 					colorBase: new THREE.Vector3().fromArray(color),
 					opacityTween: new Tween([0.7, 1], [1, 0]),
 					blendStyle: THREE.AdditiveBlending,
@@ -56,15 +55,12 @@ define(function() {
 
 			// Update it
 			app.updatedFunctions.push(function(delta, now) {
-				//this.engines.update(delta * 0.5);
-
 				for (var j = 0; j < this.engines.length; j++) {
 					this.engines[j].update(delta * 0.5);
 				}
-
 			}.bind(this));
 		},
-
+		
 		getColor: function(hexValue) {
 
 			var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexValue);

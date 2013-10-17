@@ -1,4 +1,4 @@
-define(function() {
+define(['app/app'], function() {
 
 	var StoryBoard = function() {
 		this.step = "introduction";
@@ -7,9 +7,6 @@ define(function() {
 	StoryBoard.prototype = {
 
 		introduction: function() {
-
-			var that = this;
-
 			var introTimeline = new TimelineMax({
 				paused: true
 			});
@@ -22,29 +19,33 @@ define(function() {
 				z: 200,
 				ease: Quad.easeOut,
 				onComplete: function() {
-					that.step = "showColors";
-					var intervalCount = 0;
-					var interval = setInterval(function() {
-						/*this.app.prism.materials[0].opacity = (this.app.prism.materials[0].opacity == 1) ? 0 : 1;
-						this.app.prism.materials[1].wireframe = false;*/
-						app.prism.materials[0].color.set(app.spectrum[intervalCount]);
-						app.prism.randomRotation();
-						//app.prism.materials[0].emissive.set(app.spectrum[intervalCount]);
-						intervalCount += 1;
-						if (intervalCount === 6) {
-							that.incidence();
-							clearInterval(interval);
-							that.step = "incidence";
-						}
-					}, 300);
+					//that.step = "showColors";
 				}
 			}));
 
 			return introTimeline;
 		},
 
+		showColors: function () {
+			var that = this;
+			var intervalCount = 0;
+			setTimeout(function () {
+				var interval = setInterval(function() {
+					/*this.app.prism.materials[0].opacity = (this.app.prism.materials[0].opacity == 1) ? 0 : 1;
+					this.app.prism.materials[1].wireframe = false;*/
+					app.prism.materials[0].color.set(app.spectrum[intervalCount]);
+					app.prism.randomRotation();
+					intervalCount += 1;
+					if (intervalCount === 6) {
+						that.incidence();
+						clearInterval(interval);
+						that.step = "incidence";
+					}
+				}, 300);
+			}, 300);
+		},
+
 		incidence: function() {
-			//app.prism.materials[0].wireframe = Math.random() < 0.5 ? false : true;
 			app.prism.materials[0].color.set("#111111");
 			TweenMax.to(app.prism.mesh.rotation, 0.3, {
 				x: 1,
@@ -58,10 +59,6 @@ define(function() {
 			});
 			app.whiteLight.incidence();
 			app.particleAssembler.createParticles();
-			/*setTimeout(function() {
-				app.particleAssembler.createParticles();
-			}, 600);*/
-
 		}
 	};
 

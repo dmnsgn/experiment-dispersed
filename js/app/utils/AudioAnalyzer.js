@@ -1,4 +1,4 @@
-define(function() {
+define(['app/app'], function() {
 
 	/**
 	 * AudioAnalyzer
@@ -74,7 +74,7 @@ define(function() {
 				// decode the data
 				self.ctx.decodeAudioData(request.response, function(buffer) {
 					// when the audio is decoded play the sound
-					console.log("AudioDecoded", buffer);
+					//console.log("AudioDecoded", buffer);
 					self.play(buffer);
 				}, self.onError);
 			};

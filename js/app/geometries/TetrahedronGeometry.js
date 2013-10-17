@@ -1,4 +1,4 @@
-define(['app/geometries/PolyhedronGeometry'], function() {
+define(['app/app', 'THREE', 'app/geometries/PolyhedronGeometry'], function() {
 
 	var TetrahedronGeometry = function(radius, detail) {
 		this.createGeometry(radius, detail);

@@ -1,5 +1,5 @@
 define([
-	'dat.gui',
+	//'dat.gui',
 	'app/utils/Constant',
 	'app/utils/Mouse',
 	'app/utils/Resize',
@@ -13,17 +13,18 @@ define([
 	'app/helpers/Stats',
 	'app/helpers/GridHelper',
 	'app/helpers/CameraHelper'
-], function(GUI, Constant, Mouse, Resize, AudioAnalyzer, TetrahedronGeometry, StoryBoard, ParticleTrail, ParticleAssembler, IncidentRay, Prism, Stats, GridHelper, CameraHelper) {
+], function(/*GUI,*/ Constant, Mouse, Resize, AudioAnalyzer, TetrahedronGeometry, StoryBoard, ParticleTrail, ParticleAssembler, IncidentRay, Prism, Stats, GridHelper, CameraHelper) {
 
 
 	var App = function() {
 
+		// App basics
 		this.constant = new Constant();
 		this.mouse = new Mouse();
 		this.storyBoard = new StoryBoard(this);
 		this.spectrum = ["#760CDD", "#00B0F1", "#00F1C3", "#92D14E", "#FFC000", "#F3FF00", "#DD6008", "#333333"];
 
-		// Pitetre créer ça plus tard
+		// Set up renderer and stuffs
 		this.renderer = new THREE.WebGLRenderer({
 			antialias: true
 		});
@@ -31,30 +32,36 @@ define([
 		document.getElementById('canvas').appendChild(this.renderer.domElement);
 
 		this.scene = new THREE.Scene();
+
+		// Add the main camera
 		this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 10000);
 		this.camera.position.x = 10;
-		//this.camera.position.y = 15;
 		this.camera.position.z = 1000;
 		this.camera.lookAt(this.scene.position);
 		this.camera.shakeForce = 0;
 
+		// Set up resize utility
 		var resize = new Resize(this.renderer, this.camera);
 
-		this.setupAudio();
+		// Launch preload phase
+		this.preload();
 
 	};
 
 	App.prototype = {
 
-		setupAudio: function() {
+		preload: function() {
 			var that = this;
 			var loader = document.getElementById("loader");
 			var logo = document.getElementById("logo");
 			var count = document.getElementById("count");
 
+			// Load song and get loaded percentage
 			this.audioAnalyzer = new AudioAnalyzer("sounds/What_We_Got_To_Lose_by_The_Juveniles.ogg");
 			var interval = setInterval(function() {
-				count.innerText = ~~ (that.audioAnalyzer.percentLoaded) + '%'
+				count.innerText = ~~ (that.audioAnalyzer.percentLoaded) + "%";
+
+				// On load complete
 				if (that.audioAnalyzer.percentLoaded == 100) {
 					clearInterval(interval);
 
@@ -65,11 +72,10 @@ define([
 					}
 
 					// Init scene
-					that.audioAnalyzer.changeVolume(0);
 					that.init();
 
 					setTimeout(function() {
-						that.handleAudio();
+						that.launchIntroduction();
 					}, 1000);
 				}
 			}, 1);
@@ -78,12 +84,7 @@ define([
 		init: function() {
 			var that = this;
 			this.updatedFunctions = [];
-
-			this.addLights();
-			this.shadowCast();
-
-			this.createSurface();
-			this.particleAssembler = new ParticleAssembler();
+			this.shakeCount = 0;
 
 			// Cube Map
 			var texture = THREE.ImageUtils.loadTexture("img/2.jpg");
@@ -94,12 +95,10 @@ define([
 			}));
 			this.scene.add(this.cubeMap);
 
+			this.addLights();
+
 			// Objects
-			/*this.incidentRay = new IncidentRay(this.scene);
-			this.updatedFunctions.push(function(delta, now) {
-				this.incidentRay.update(Math.cos(now) / 2);
-				this.incidentRay.position(this.camera.position.z);
-			}.bind(this));*/
+			this.particleAssembler = new ParticleAssembler();
 			this.whiteLight = new ParticleTrail("whitelight", this.scene, 30);
 
 			this.prism = new Prism(this.scene);
@@ -111,10 +110,9 @@ define([
 			// Loop
 			var lastTimeMsec = null;
 			requestAnimationFrame(function animate(nowMsec) {
-				// keep looping
 				requestAnimationFrame(animate);
 
-				// measure time
+				// Get time
 				lastTimeMsec = lastTimeMsec || nowMsec - 1000 / 60;
 				var deltaMsec = Math.min(200, nowMsec - lastTimeMsec);
 				lastTimeMsec = nowMsec;
@@ -126,28 +124,36 @@ define([
 
 			});
 
-			/*setTimeout(function () {
-				debugger;
-			}, 3000);
-*/
-			this.createGUI();
-			this.debug();
+			//this.createGUI();
+			//this.debug();
 		},
 
 		update: function(delta, now) {
-
-
-			if (app.storyBoard.step == "introduction") {
+			// Handle updated things
+			if (this.storyBoard.step == "introduction") {
+				if (this.audioAnalyzer.getAverageFrequencies() > 100) {
+					this.camera.shakeForce = (this.audioAnalyzer.getAverageFrequencies() - 100) * 3;
+					TweenMax.to(this.camera, 0.5, {
+						shakeForce: 0,
+						onCompleteParams: [this],
+						onComplete: function (app) {
+							app.shakeCount += 1;
+							if (app.shakeCount == 14) {
+								app.storyBoard.step = "showColors";
+								app.storyBoard.showColors();
+							}
+						}
+					});
+				}
 				this.whiteLight.update(Math.cos(now) / 2);
 				this.prism.update(Math.sin(now) / 20, Math.cos(now) / 10);
-			} else if (app.storyBoard.step == "showColors") {
+			} else if (this.storyBoard.step == "showColors") {
 				this.whiteLight.update(Math.cos(now) / 2);
-			} else if (app.storyBoard.step == "incidence") {
+			} else if (this.storyBoard.step == "incidence") {
 				this.prism.coolPosition(Math.cos(now) / 10);
 			}
 
 			// Camera update
-			//this.camera.position.x += (this.mouse.x * 25 - this.camera.position.x) * (delta * 3);
 			this.camera.position.x = 0 + this.camera.shakeForce * 2 * Math.random() - this.camera.shakeForce;
 			this.camera.position.y = 0 + this.camera.shakeForce * 2 * Math.random() - this.camera.shakeForce;
 
@@ -155,40 +161,8 @@ define([
 			this.renderer.render(this.scene, this.camera);
 		},
 
-		handleAudio: function() {
+		launchIntroduction: function() {
 			this.storyBoard.introduction().play();
-
-			this.updatedFunctions.push(function() {
-
-				if (app.storyBoard.step == "introduction" && this.audioAnalyzer.getAverageFrequencies() > 110) {
-					this.camera.shakeForce = (this.audioAnalyzer.getAverageFrequencies() - 110) * 3;
-					TweenMax.to(this.camera, 0.5, {
-						shakeForce: 0
-					});
-				}
-
-			}.bind(this));
-		},
-
-		createSurface: function() {
-
-			/*var geometry	= new THREE.CubeGeometry( 1, -0.5, 1);
-			var texture	= THREE.ImageUtils.loadTexture( "img/water.jpg" );
-			//texture.repeat.set( 10, 10 );
-			texture.repeat.set( 0.5, 0.8 );
-			texture.wrapS	= texture.wrapT = THREE.RepeatWrapping;
-			var material	= new THREE.MeshPhongMaterial({
-				ambient		: 0xffffff,
-				color		: 0xffffff,
-				shininess	: 150,
-				specular	: 0xffffff,
-				map		: texture
-			});
-			var mesh		= new THREE.Mesh( geometry, material );
-			mesh.scale.multiplyScalar(3);
-			mesh.overdraw = true;
-			mesh.position.y		= -0.5/2;
-			this.scene.add( mesh );*/
 		},
 
 		addLights: function() {
@@ -203,22 +177,11 @@ define([
 			directionalLight.position.set(0, 1, 0).normalize();
 			directionalLight1.position.set(1, 1, 1).normalize();
 			directionalLight2.position.set(-1, -1, -1).normalize();
-			/*directionalLight.castShadow = true;
-			directionalLight.shadowDarkness = 0.5;*/
-
-			//directionalLight.shadowCameraVisible = true;
 
 			this.scene.add(ambientLight);
 			this.scene.add(directionalLight);
 			this.scene.add(directionalLight1);
 			this.scene.add(directionalLight2);
-		},
-
-		shadowCast: function() {
-			this.renderer.shadowMapEnabled = true;
-
-			// to antialias the shadow
-			this.renderer.shadowMapSoft = true;
 		},
 
 		createGUI: function() {
@@ -228,43 +191,36 @@ define([
 			cameraFolder.add(this.camera.position, 'z', 1, 1500).name("Zoom").step("1");
 			cameraFolder.add(this.camera.position, 'y', 1, 1500).name("Up / Down").step("1");
 
-			var prismFolder = this.gui.addFolder('Prism');
+			/*var prismFolder = this.gui.addFolder('Prism');
 			prismFolder.add(this.prism.mesh.rotation, 'x', 0, 360 * M_PI / 180).name("Rotation X").step("0.1");
 			prismFolder.add(this.prism.mesh.rotation, 'y', 0, 360 * M_PI / 180).name("Rotation Y").step("0.1");
 			prismFolder.add(this.prism.mesh.rotation, 'z', 0, 360 * M_PI / 180).name("Rotation Z").step("0.1");
 
 			prismFolder.add(this.prism.mesh.position, 'x', 0, 200).name("Position X").step("1");
 			prismFolder.add(this.prism.mesh.position, 'y', 0, 200).name("Position Y").step("1");
-			prismFolder.add(this.prism.mesh.position, 'z', 0, 200).name("Position Z").step("1");
+			prismFolder.add(this.prism.mesh.position, 'z', 0, 200).name("Position Z").step("1");*/
 
-			/*var whiteLightFolder = this.gui.addFolder('White Light');
-			whiteLightFolder.add(this.incidentRay.mesh.position, 'x', -2500, 2500).name("Position X").step("1");
-			whiteLightFolder.add(this.incidentRay.mesh.position, 'y', -2500, 2500).name("Position Y").step("1");
-			whiteLightFolder.add(this.incidentRay.mesh.position, 'z', -2500, 2500).name("Position Z").step("1");*/
-
-		},
-
-		debug: function() {
-
-			// Open right folder
+			// Open each folder
 			var e = document.createEvent('Events');
 			e.initEvent("click");
 			var folders = document.querySelectorAll(".dg li.title");
 			for (var i = 0, len = folders.length; i < len; i++) {
 				folders[i].dispatchEvent(e);
 			}
+		},
 
+		debug: function() {
 			// Helpers
-			var helpers = [];
+			/*var helpers = [];
 			helpers.push(
-				/*new THREE.GridHelper(50, 2),
+				new THREE.GridHelper(50, 2),
 				new THREE.AxisHelper(500),
-				new THREE.CameraHelper(this.camera)*/
+				new THREE.CameraHelper(this.camera)
 			);
 
-			for (var i = helpers.length - 1; i >= 0; i--) {
+			for (var j= helpers.length - 1; j>= 0; j--) {
 				this.scene.add(helpers[i]);
-			}
+			}*/
 
 			// Perf
 			var stats = new Stats();
@@ -280,18 +236,9 @@ define([
 			setInterval(function() {
 
 				stats.begin();
-
-				// your code goes here
-
 				stats.end();
 
 			}, 1000 / 60);
-		},
-
-		distanceBetween: function(p1, p2) {
-			var dx = p2.x - p1.x;
-			var dy = p2.y - p1.y;
-			return Math.sqrt(dx * dx + dy * dy);
 		}
 
 	};

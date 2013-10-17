@@ -1,4 +1,4 @@
-define(function() {
+define(['app/app'], function() {
 
 	var Resize = function(renderer, camera) {
 		this.camera = camera;

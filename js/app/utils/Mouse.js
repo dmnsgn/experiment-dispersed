@@ -1,4 +1,4 @@
-define(function() {
+define(['app/app'], function() {
 
 	var Mouse = function () {
 		this.x = 0;

@@ -10,16 +10,12 @@ define(function() {
 			}),
 			new THREE.MeshBasicMaterial({
 				color: '#AAA',
-				wireframe: true,
 				transparent: true,
-				opacity: 1
+				opacity: 1,
+				wireframe: true
 			})
 		];
 		this.mesh = new THREE.SceneUtils.createMultiMaterialObject(this.geometry, this.materials);
-
-		// Set cast shadow behavior
-		//this.mesh.castShadow = true;
-		//this.mesh.receiveShadow = false;
 
 		this.mesh.rotation.y = 90 * deg2rad;
 		this.mesh.rotation.z = 120 * deg2rad;
@@ -42,6 +38,7 @@ define(function() {
 				ease: Bounce.easeInOut
 			});
 			TweenMax.to(this.mesh.rotation, 0.15, {
+				x: (~~(Math.random() * 360) + 1) * deg2rad,
 				y: (~~(Math.random() * 360) + 1) * deg2rad
 			});
 		},

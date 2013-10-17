@@ -4,13 +4,6 @@ define(function() {
 	var IncidentRay = function(scene) {
 		var texture = THREE.ImageUtils.loadTexture("img/spotLine.png");
 		this.geometry = new THREE.PlaneGeometry(1, 1000, 1, 100);
-		//this.geometry = new THREE.CylinderGeometry(1, 5000, 1, 100);
-/*
-		this.geometry.computeCentroids();
-		this.geometry.computeFaceNormals();
-		this.geometry.computeVertexNormals();
-		this.geometry.computeTangents();
-		this.geometry.computeBoundingSphere();*/
 
 		this.material = new THREE.MeshBasicMaterial({
 			color: 0xFFFFFF,
@@ -18,8 +11,6 @@ define(function() {
 			transparent: true,
 			alphaTest: 0.5,
 			side: THREE.DoubleSide
-			// wireframe: true
-			// blending: THREE.AdditiveBlending
 		});
 
 		this.blend();
@@ -36,7 +27,6 @@ define(function() {
 		update: function(radius) {
 			var angle = 0;
 			//var radius = 0.3;
-			//log(radius)
 			for (var i = this.geometry.vertices.length - 1; i >= 0; i--) {
 				var vertex = this.geometry.vertices[i];
 				angle += 0.1;
