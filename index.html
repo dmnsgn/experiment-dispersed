@@ -159,7 +159,7 @@
 		background-clip: padding-box;
 		-webkit-animation: loader 5s both infinite;
 		-moz-animation: loader 5s both infinite;
-		-ms-animation: loader 5s both infinite;
+		animation: loader 5s both infinite;
 	}
 	#loader .circle:nth-child(1) {
 		background-color: #760CDD;
@@ -203,11 +203,23 @@
 		-webkit-animation-delay: 1.05s;
 		animation-delay: 1.05s;
 	}
+	.transition-out {
+		opacity: 0;
+		-webkit-transition: opacity 0.3s ease-in; 
+		-moz-transition: opacity 0.3s ease-in; 
+		-o-transition: opacity 0.3s ease-in; 
+		transition: opacity 0.3s ease-in; 
+	}
+	.launchAgain {
+		font-family: Futura, Tahoma, sans-serif;
+		font-size: 20px;
+		color: #111;
+	}
 	</style>
 	<script data-main="js/main" src="js/lib/require.js"></script>
 </head>
 <body>
-	<div id="logo"><img src="img/logo.png" alt=""></div>
+	<div id="logo"><img src="img/logo.png" alt="Dispersed logo"></div>
 	<div id="loader">
 		<i class="circle"></i>
 		<i class="circle"></i>

@@ -14,22 +14,18 @@ define(['app/app'], function() {
 				z: 600,
 				ease: Quad.easeIn
 			}));
-			// augmenter une light
-			introTimeline.append(new TweenMax(app.camera.position, 5.8, {
+			introTimeline.append(new TweenMax(app.camera.position, 6, {
 				z: 200,
-				ease: Quad.easeOut,
-				onComplete: function() {
-					//that.step = "showColors";
-				}
+				ease: Quad.easeOut
 			}));
 
 			return introTimeline;
 		},
 
-		showColors: function () {
+		showColors: function() {
 			var that = this;
 			var intervalCount = 0;
-			setTimeout(function () {
+			setTimeout(function() {
 				var interval = setInterval(function() {
 					/*this.app.prism.materials[0].opacity = (this.app.prism.materials[0].opacity == 1) ? 0 : 1;
 					this.app.prism.materials[1].wireframe = false;*/
@@ -43,6 +39,7 @@ define(['app/app'], function() {
 					}
 				}, 300);
 			}, 300);
+			app.whiteLight.fade();
 		},
 
 		incidence: function() {
@@ -59,6 +56,29 @@ define(['app/app'], function() {
 			});
 			app.whiteLight.incidence();
 			app.particleAssembler.createParticles();
+
+			setTimeout(function() {
+				this.end();
+			}.bind(this), 15000);
+		},
+
+		end: function() {
+
+			var volume = 1;
+			var interval = setInterval(function () {
+				volume -= 0.1;
+				if (volume <= 0.1) {
+					document.getElementById("canvas").className = "transition-out";
+					var div = document.createElement('div');
+					div.id = "logo";
+					div.innerHTML = '<img src="img/logo.png" alt="Dispersed logo"><a href="javascript:void(0)" class="launchAgain" onClick="window.location.href=window.location.href">Launch again</a>';
+					document.body.appendChild(div);
+					clearInterval(interval);
+					app.audioAnalyzer.sourceNode.noteOff(0);
+					return;
+				}
+				app.audioAnalyzer.changeVolume(volume);
+			}, 50);
 		}
 	};
 

@@ -424,6 +424,6 @@ ParticleEngine.prototype.update = function(dt)
 
 ParticleEngine.prototype.destroy = function()
 {
-    scene.remove( this.particleMesh );
+    this.scene.remove( this.particleMesh );
 }
 ///////////////////////////////////////////////////////////////////////////////

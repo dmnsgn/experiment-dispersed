@@ -61,6 +61,27 @@ define(['app/app'], function() {
 			}
 		},
 
+		fade: function () {
+			for (var i = 0; i < this.particles.length; i++) {
+				var particle = this.particles[i];
+				var timeline = new TimelineMax();
+				timeline.append(new TweenMax(particle.material, 0.3, {
+					opacity: 0.2,
+					delay: (Math.random() * (0.3 - 0.1)) + 0.1,
+					ease: Sine.easeIn
+				}));
+				timeline.append(new TweenMax(particle.material, 1, {
+					opacity: 0.2
+				}));
+				timeline.append(new TweenMax(particle.material, 0.3, {
+					opacity: 1,
+					delay: (Math.random() * (0.3 - 0.1)) + 0.1,
+					ease: Sine.easeOut
+				}));
+				timeline.play();
+			}
+		},
+
 		incidence: function() {
 			for (var i = 0; i < this.particles.length; i++) {
 

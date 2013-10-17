@@ -10,8 +10,8 @@ define(['app/app'], function() {
 		this.createContext();
 		this.percentLoaded = 0;
 		this.setupAudioNodes();
-		this.setupVolume();
 		this.loadSound(file);
+		this.setupVolume();
 	};
 
 	AudioAnalyzer.prototype = {
@@ -52,7 +52,7 @@ define(['app/app'], function() {
 		},
 		setupVolume: function() {
 			// Create a gain node.
-			this.gainNode = this.ctx.createGain();
+			this.gainNode = this.ctx.createGainNode();
 			// Connect the source to the gain node.
 			this.sourceNode.connect(this.gainNode);
 			// Connect the gain node to the destination.
@@ -108,6 +108,48 @@ define(['app/app'], function() {
 
 			average = values / length;
 			return average;
+		},
+
+		lowPassFilter: function() {
+			// Create the filter
+			var filter = this.ctx.createBiquadFilter();
+			// Create the audio graph.
+			this.sourceNode.connect(filter);
+			filter.connect(this.ctx.destination);
+			// Create and specify parameters for the low-pass filter.
+			filter.type = 0; // Low-pass filter. See BiquadFilterNode docs
+			filter.frequency.value = 440; // Set cutoff to 440 HZ
+			// Playback the sound.
+			this.sourceNode.start(0);
+		},
+		/**
+		 * [changeFrequency description]
+		 * @param  {Float} value [between 0 and 1]
+		 */
+		changeFrequency: function(value) {
+			// Create the filter
+			this.filterFrequency = this.ctx.createBiquadFilter();
+			// Create the audio graph.
+			this.sourceNode.connect(this.filterFrequency);
+			this.filterFrequency.connect(this.ctx.destination);
+			// Create and specify parameters for the low-pass this.filterFrequency.
+			this.filterFrequency.type = 0; // Low-pass this.filterFrequency. See BiquadFilterNode docs
+
+			// Clamp the frequency between the minimum value (40 Hz) and half of the
+			// sampling rate.
+			var minValue = 40;
+			var maxValue = this.ctx.sampleRate / 2;
+			// Logarithm (base 2) to compute how many octaves fall in the range.
+			var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
+			// Compute a multiplier from 0 to 1 based on an exponential scale.
+			var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
+			// Get back to the frequency value between min and max.
+			this.filterFrequency.frequency.value = maxValue * multiplier;
+		},
+
+		changeQuality: function (value, qualite) {
+			var qualiteMul = qualite || 30;
+			this.filterFrequency.Q.value = value * qualiteMul;
 		},
 
 		onProgress: function(e) {
