@@ -53,7 +53,7 @@ define([
 
 			this.audioAnalyzer = new AudioAnalyzer("sounds/What_We_Got_To_Lose_by_The_Juveniles.ogg");
 			var interval = setInterval(function() {
-				count.innerText = ~~(that.audioAnalyzer.percentLoaded) + '%'
+				count.innerText = ~~ (that.audioAnalyzer.percentLoaded) + '%'
 				if (that.audioAnalyzer.percentLoaded == 100) {
 					clearInterval(interval);
 
@@ -67,7 +67,7 @@ define([
 					that.audioAnalyzer.changeVolume(0);
 					that.init();
 
-					setTimeout(function () {
+					setTimeout(function() {
 						that.handleAudio();
 					}, 1000);
 				}
@@ -82,6 +82,7 @@ define([
 			this.shadowCast();
 
 			this.createSurface();
+			this.createParticles();
 
 			// Cube Map
 			var texture = THREE.ImageUtils.loadTexture("img/2.jpg");
@@ -151,7 +152,7 @@ define([
 			this.renderer.render(this.scene, this.camera);
 		},
 
-		handleAudio: function () {
+		handleAudio: function() {
 			this.storyBoard.introduction().play();
 
 			this.updatedFunctions.push(function() {
@@ -172,6 +173,16 @@ define([
 					default:
 						log("Ooops ! Out of switch");
 				}
+			}.bind(this));
+		},
+
+		createParticles: function() {
+			this.engine = new ParticleEngine(this.scene);
+			this.engine.setValues(Examples.smoke);
+			this.engine.initialize();
+
+			this.updatedFunctions.push(function (delta, now) {
+				this.engine.update( delta * 0.5 ); 
 			}.bind(this));
 		},
 
@@ -285,10 +296,10 @@ define([
 			}, 1000 / 60);
 		},
 
-		distanceBetween: function(p1,p2) {
-			var dx = p2.x-p1.x;
-			var dy = p2.y-p1.y;
-			return Math.sqrt(dx*dx + dy*dy);
+		distanceBetween: function(p1, p2) {
+			var dx = p2.x - p1.x;
+			var dy = p2.y - p1.y;
+			return Math.sqrt(dx * dx + dy * dy);
 		}
 
 	};

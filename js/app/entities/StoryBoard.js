@@ -15,16 +15,16 @@ define(function() {
 			var introTimeline = new TimelineMax({
 				paused: true
 			});
-			introTimeline.append(new TweenMax(app.camera.position, 12, {
+			introTimeline.append(new TweenMax(app.camera.position, /*12*/2, {
 				z: 600,
 				ease: Quad.easeIn
 			}));
 			// augmenter une light
-			introTimeline.append(new TweenMax(app.camera.position, 6, {
+			introTimeline.append(new TweenMax(app.camera.position, /*6*/1, {
 				z: 200,
 				ease: Quad.easeOut,
 				onComplete: function() {
-
+					log("on intro complete")
 					TweenMax.to(app.prism.mesh.rotation, 0.5, {
 						x: 1,
 						z: 0

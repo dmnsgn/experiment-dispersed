@@ -14,6 +14,14 @@ require.config({
         three: {
             exports: 'THREE'
         },
+        ParticleEngine: {
+            deps: ["THREE"],
+            exports: 'ParticleEngine'
+        },
+        ParticleEngineExamples: {
+            deps: ["ParticleEngine"],
+            exports: 'ParticleEngineExamples'
+        },
         Stats: {
             exports: 'Stats'
         },
@@ -26,7 +34,7 @@ require.config({
         }
     },
 
-    deps: ['THREE', 'TweenMax', 'TimelineMax']
+    deps: ['THREE', 'ParticleEngine', 'ParticleEngineExamples', 'TweenMax', 'TimelineMax']
 });
 
 /**
