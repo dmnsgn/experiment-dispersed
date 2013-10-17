@@ -63,6 +63,12 @@ define(function() {
 				particle.angle += particle.speed + app.camera.position.z * particle.speed / 10000;
 				particle.time += particle.speed * 5;
 
+				// Apply position
+				particle.position.x = Math.cos(i + particle.angle) * (particle.orbit * RADIUS_SCALE);
+				particle.position.y = Math.sin(i + particle.angle) * (particle.orbit * RADIUS_SCALE);
+
+				particle.position.z = app.camera.position.z + particle.zOffset + Math.sin(particle.time) * particle.force;
+
 
 				/*for (var j = particle.geometry.vertices.length - 1; j >= 0; j--) {
 					var vertex = particle.geometry.vertices[j];
@@ -74,13 +80,6 @@ define(function() {
 					particle.geometry.verticesNeedUpdate = true;
 				}
 */
-
-
-				// Apply position
-				particle.position.x = Math.cos(i + particle.angle) * (particle.orbit * RADIUS_SCALE);
-				particle.position.y = Math.sin(i + particle.angle) * (particle.orbit * RADIUS_SCALE);
-
-				particle.position.z = app.camera.position.z + particle.zOffset + Math.sin(particle.time) * particle.force;
 			}
 		},
 
@@ -92,12 +91,15 @@ define(function() {
 			for (var i = 0; i < this.particles.length; i++) {
 
 				var particle = this.particles[i];
-				TweenMax.to(particle.position, 1, {
-					/*x: Math.cos(i + particle.angle) * (particle.orbit * RADIUS_SCALE),
-					y: Math.sin(i + particle.angle) * (particle.orbit * RADIUS_SCALE),*/
+				TweenMax.to(particle.position, 0.6, {
 					x: 0,
-					y: 0,
+					y: Math.sin(i + particle.angle) * (particle.orbit * RADIUS_SCALE),
+					/*x: 0,
+					y: 0,*/
 					z: -(app.camera.position.z + particle.zOffset + Math.sin(particle.time) * particle.force)
+				});
+				TweenMax.to(particle.material, 0.6, {
+					opacity: 0
 				});
 
 			}

@@ -7,12 +7,13 @@ define([
 	'app/geometries/TetrahedronGeometry',
 	'app/entities/StoryBoard',
 	'app/entities/ParticleTrail',
+	'app/entities/ParticleAssembler',
 	'app/entities/IncidentRay',
 	'app/entities/Prism',
 	'app/helpers/Stats',
 	'app/helpers/GridHelper',
 	'app/helpers/CameraHelper'
-], function(GUI, Constant, Mouse, Resize, AudioAnalyzer, TetrahedronGeometry, StoryBoard, ParticleTrail, IncidentRay, Prism, Stats, GridHelper, CameraHelper) {
+], function(GUI, Constant, Mouse, Resize, AudioAnalyzer, TetrahedronGeometry, StoryBoard, ParticleTrail, ParticleAssembler, IncidentRay, Prism, Stats, GridHelper, CameraHelper) {
 
 
 	var App = function() {
@@ -20,7 +21,7 @@ define([
 		this.constant = new Constant();
 		this.mouse = new Mouse();
 		this.storyBoard = new StoryBoard(this);
-		this.spectrum = [0x760CDD, 0x00B0F1, 0x00F1C3, 0x92D14E, 0xFFC000, 0xF3FF00, 0xDD6008, 0x111111];
+		this.spectrum = ["#760CDD", "#00B0F1", "#00F1C3", "#92D14E", "#FFC000", "#F3FF00", "#DD6008", "#333333"];
 
 		// Pitetre créer ça plus tard
 		this.renderer = new THREE.WebGLRenderer({
@@ -82,7 +83,7 @@ define([
 			this.shadowCast();
 
 			this.createSurface();
-			this.createParticles();
+			this.particleAssembler = new ParticleAssembler();
 
 			// Cube Map
 			var texture = THREE.ImageUtils.loadTexture("img/2.jpg");
@@ -139,6 +140,8 @@ define([
 			if (app.storyBoard.step == "introduction") {
 				this.whiteLight.update(Math.cos(now) / 2);
 				this.prism.update(Math.sin(now) / 20, Math.cos(now) / 10);
+			} else if (app.storyBoard.step == "showColors") {
+				this.whiteLight.update(Math.cos(now) / 2);
 			} else if (app.storyBoard.step == "incidence") {
 				this.prism.coolPosition(Math.cos(now) / 10);
 			}
@@ -157,32 +160,13 @@ define([
 
 			this.updatedFunctions.push(function() {
 
-				switch (this.storyBoard.step) {
-					// Handle drum kick
-					case "introduction":
-						if (this.audioAnalyzer.getAverageFrequencies() > 110) {
-							this.camera.shakeForce = (this.audioAnalyzer.getAverageFrequencies() - 110) * 3;
-							TweenMax.to(this.camera, 0.5, {
-								shakeForce: 0
-							});
-						}
-						break;
-					case "incidence":
-						// do things
-						break;
-					default:
-						log("Ooops ! Out of switch");
+				if (app.storyBoard.step == "introduction" && this.audioAnalyzer.getAverageFrequencies() > 110) {
+					this.camera.shakeForce = (this.audioAnalyzer.getAverageFrequencies() - 110) * 3;
+					TweenMax.to(this.camera, 0.5, {
+						shakeForce: 0
+					});
 				}
-			}.bind(this));
-		},
 
-		createParticles: function() {
-			this.engine = new ParticleEngine(this.scene);
-			this.engine.setValues(Examples.smoke);
-			this.engine.initialize();
-
-			this.updatedFunctions.push(function (delta, now) {
-				this.engine.update( delta * 0.5 ); 
 			}.bind(this));
 		},
 
@@ -210,17 +194,24 @@ define([
 		addLights: function() {
 			// Create the object
 			var ambientLight = new THREE.AmbientLight(0x888888);
-			var directionalLight = new THREE.DirectionalLight(0x404040);
+			var directionalLight = new THREE.DirectionalLight(0xFFFFFF);
+			var directionalLight1 = new THREE.DirectionalLight(0xFFFFFF);
+			var directionalLight2 = new THREE.DirectionalLight(0xFFFFFF);
+			var directionalLight3 = new THREE.DirectionalLight(0xFFFFFF);
 
 			// Set cast shadow behavior
 			directionalLight.position.set(0, 1, 0).normalize();
-			directionalLight.castShadow = true;
-			directionalLight.shadowDarkness = 0.5;
+			directionalLight1.position.set(1, 1, 1).normalize();
+			directionalLight2.position.set(-1, -1, -1).normalize();
+			/*directionalLight.castShadow = true;
+			directionalLight.shadowDarkness = 0.5;*/
 
 			//directionalLight.shadowCameraVisible = true;
 
 			this.scene.add(ambientLight);
 			this.scene.add(directionalLight);
+			this.scene.add(directionalLight1);
+			this.scene.add(directionalLight2);
 		},
 
 		shadowCast: function() {
@@ -235,6 +226,7 @@ define([
 
 			var cameraFolder = this.gui.addFolder('Camera');
 			cameraFolder.add(this.camera.position, 'z', 1, 1500).name("Zoom").step("1");
+			cameraFolder.add(this.camera.position, 'y', 1, 1500).name("Up / Down").step("1");
 
 			var prismFolder = this.gui.addFolder('Prism');
 			prismFolder.add(this.prism.mesh.rotation, 'x', 0, 360 * M_PI / 180).name("Rotation X").step("0.1");

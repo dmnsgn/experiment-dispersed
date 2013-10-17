@@ -362,7 +362,6 @@ ParticleEngine.prototype.initialize = function()
 	this.particleMesh = new THREE.ParticleSystem( this.particleGeometry, this.particleMaterial );
 	this.particleMesh.dynamic = true;
 	this.particleMesh.sortParticles = true;
-	log(this)
 	this.scene.add( this.particleMesh );
 }
 
