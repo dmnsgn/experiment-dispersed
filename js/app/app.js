@@ -27,7 +27,7 @@ define([
 			antialias: true
 		});
 		this.renderer.setSize(window.innerWidth, window.innerHeight);
-		document.body.appendChild(this.renderer.domElement);
+		document.getElementById('canvas').appendChild(this.renderer.domElement);
 
 		this.scene = new THREE.Scene();
 		this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 10000);
@@ -47,11 +47,23 @@ define([
 
 		setupAudio: function() {
 			var that = this;
+			var loader = document.getElementById("loader");
+			var logo = document.getElementById("logo");
+			var count = document.getElementById("count");
+
 			this.audioAnalyzer = new AudioAnalyzer("sounds/What_We_Got_To_Lose_by_The_Juveniles.ogg");
 			var interval = setInterval(function() {
-				log(that.audioAnalyzer.percentLoaded);
+				count.innerText = ~~(that.audioAnalyzer.percentLoaded) + '%'
 				if (that.audioAnalyzer.percentLoaded == 100) {
 					clearInterval(interval);
+
+					// Remove loader
+					if (loader.parentNode) {
+						loader.parentNode.removeChild(logo);
+						loader.parentNode.removeChild(loader);
+					}
+
+					// Init scene
 					that.audioAnalyzer.changeVolume(0);
 					that.init();
 
