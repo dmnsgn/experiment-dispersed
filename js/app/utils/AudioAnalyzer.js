@@ -30,7 +30,7 @@ define(['app/app'], function() {
 
 
 			// setup a javascript node
-			this.javascriptNode = this.ctx.createJavaScriptNode(2048, 1, 1);
+			this.javascriptNode = this.ctx.createScriptProcessor(2048, 1, 1);
 			// connect to destination, else it isn't called
 			this.javascriptNode.connect(this.ctx.destination);
 
@@ -52,7 +52,7 @@ define(['app/app'], function() {
 		},
 		setupVolume: function() {
 			// Create a gain node.
-			this.gainNode = this.ctx.createGainNode();
+			this.gainNode = this.ctx.createGain();
 			// Connect the source to the gain node.
 			this.sourceNode.connect(this.gainNode);
 			// Connect the gain node to the destination.
@@ -82,7 +82,7 @@ define(['app/app'], function() {
 		},
 		play: function(buffer) {
 			this.sourceNode.buffer = buffer;
-			this.sourceNode.noteOn(0);
+			this.sourceNode.start(0);
 
 			this.javascriptNode.onaudioprocess = this.getFrequencies.bind(this);
 		},
